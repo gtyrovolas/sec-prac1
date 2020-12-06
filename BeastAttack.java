@@ -7,6 +7,19 @@ import java.util.concurrent.TimeUnit;
 public class BeastAttack
 {
 
+    static void printCT(byte[] ct){
+	
+	for(int i = 0; i < 8; i++)
+	{
+	    System.out.print(String.format("%02x ", ct[i]));
+	}
+	
+	for(int j = 8; j < ct.length; j++)
+	{
+	    System.out.print(String.format("%02x", ct[j]));
+	}
+	System.out.println("");    
+    }
 
     public static void main(String[] args) throws Exception
     {
@@ -22,27 +35,20 @@ public class BeastAttack
 	// when run through ssh the code below gives approximately 5000 difference in the IV
 	
 	int lsb = (ciphertext[5] & 0xFF) * 256 * 256 + (ciphertext[6] & 0xFF) * 256 + (ciphertext[7] & 0xFF), plsb = 0;
+
+	for(int k = 1; k < 100; k++){
 	
-	while(true){
-	TimeUnit.MILLISECONDS.sleep(996);
 	plsb = lsb;
 	prevCipher = ciphertext;
-	int length = callEncrypt(null, 0, ciphertext);	    
 	
-	for(int i = 0; i < 8; i++)
-	{
-	    System.out.print(String.format("%02x ", ciphertext[i]));
-	}
+	byte[] prefix = {0, 0, 0, 0, 0, 0, 0};
+	int length = callEncrypt(prefix, prefix.length, ciphertext);	    
+	
 
-	for(int j = 8; j < length; j++)
-	{
-	    System.out.print(String.format("%02x", ciphertext[j]));
-	}
-	System.out.println("");    
-	
 	lsb = (ciphertext[5] & 0xFF) * 256 * 256 + (ciphertext[6] & 0xFF) * 256 + (ciphertext[7] & 0xFF);
 	int diff = (lsb - plsb + 256 * 256 * 256) % (256 * 256 * 256);
 	System.out.println("Difference of IV: " + diff + " " +  String.format("%#x", diff));
+
 
 	}
 

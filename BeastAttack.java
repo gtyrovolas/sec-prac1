@@ -44,21 +44,26 @@ public class BeastAttack
 		return prefix;
     }
 
-    static void guessIV(byte[] ciphertext, byte[] prefix){
+    static void guessIV(byte[] ciphertext, byte[] prefix) throws Exception{
     	int cnt = 0;
     	boolean found = false;
 
 		while(!found && cnt < 300){
 			cnt += 1;
 			
-			expIV = nextIV(ciphertext);
-			callEncrypt(prefix, prefix.length, ciphertext);
+			byte[] expIV = nextIV(ciphertext);
+			byte[] tempPrefix = new byte[8];
+
+			for(int i = 0; i < prefix.length; i++)
+				tempPrefix[i] = (byte) (expIV[i] ^ prefix[i]);
+
+			callEncrypt(tempPrefix, tempPrefix.length, ciphertext);
 
 			found = Arrays.equals(expIV, subArray(ciphertext, 0, 8));
 		}
 
 		if(found) return;
-		else return -1;
+    		else System.out.println("FAILED TO GUESS IV");
     }
 
     public static void main(String[] args) throws Exception
@@ -78,21 +83,22 @@ public class BeastAttack
 		// when run through ssh the code below gives approximately 5000 difference in the IV
 		
 
-		for(int pos = 0; pos < 8; pos++){
+		for(int pos = 0; pos < 2; pos++){
 
 			// for each position find the target ciphertext
 			// need 7 - pos zeroes before the text
 			byte[] prefix = new byte[7 - pos];
 			Arrays.fill(prefix, (byte) 0);
-
-			guessIV(pos, ciphertext, prefix);
-
+			
+			guessIV(ciphertext, prefix);
+			
 			// E(msg[pos] xor iv_8) is at ciphertext 15
 			byte tar = ciphertext[15];
 			byte iv_8 = ciphertext[7];
+			
+			byte[] tarct = subArray(8, 15);
 
 			System.out.println("Sucess, target is " + tar + " iv_8 is " + iv_8);
-
 
 			boolean match = false;
 			boolean end = false;
@@ -100,23 +106,26 @@ public class BeastAttack
 			for(byte candidate = -128; !end; candidate++){
 				if(candidate == 127) end = true;
 				
-				byte[] prefix = merge(pos, msg, candidate);
-				System.out.print("Prefix is :" )
-				for(byte b : prefix) System.out.print(" " + b)
-
+				prefix = new byte[8];
+				prefix = merge(pos, msg, candidate);
+				System.out.print("Prefix is :" );
+				for(byte b : prefix) System.out.print(" " + b);
+				System.out.print("  ");
+				
 				guessIV(ciphertext, prefix);	
-
+				
 				if (ciphertext[15] == tar){
-					System.out.println("Candidate " + candidate + " is a match");
-					msg[pos] = (byte) (candidate ^ iv_8);
+					msg[pos] = (byte) ( candidate ^ iv_8);
+					System.out.println("Candidate " + candidate + " is a match. Message is " + msg[pos]);
 					match = true;
 					break;
 				}
 				else{
-					System.out.println("Candidate " + candidate +" is rejected");
+					System.out.println("Candidate " + candidate +" is rejected. Encrypts to " + ciphertext[15]);
 					continue;
 				}
 			}
+			
 			
 			if(!match){ 
 				System.out.println("\nxXx No match found xXx\n");

@@ -35,6 +35,16 @@ public class BeastAttack
 		return expIV;
     }
 
+    static byte[] merge(int pos, byte[] msg, byte x){
+    	byte[] prefix = new byte[8];
+	int i = 0;
+	for(; i < 7 - pos; i++) prefix[i] = 0;
+	for(; i < 7; i++) prefix[i] = msg[pos + i - 7];
+	prefix[7] = x;
+
+	return prefix;
+    }
+
     public static void main(String[] args) throws Exception
     {
 
@@ -52,7 +62,7 @@ public class BeastAttack
 	
 	byte[] msg = new byte[8];
 
-	int pos = 0;
+	for(int pos = 0; pos < 8; pos++){
 
 	byte[] expIV = nextIV(ciphertext);
 	boolean found = false;
@@ -62,10 +72,10 @@ public class BeastAttack
 	while(!found && cnt < 300){
 		cnt += 1;
 		
-		byte[] prefix = new byte[7];
+		byte[] prefix = new byte[7 - pos];
 		Arrays.fill(prefix, (byte) 0);
 		expIV = nextIV(ciphertext);
-		callEncrypt(prefix, 7, ciphertext);
+		callEncrypt(prefix, 7 - pos, ciphertext);
 
 		found = Arrays.equals(expIV, subArray(ciphertext, 0, 8));
 	}
@@ -75,41 +85,49 @@ public class BeastAttack
 	byte iv_8 = ciphertext[7];
 	if(found) System.out.println("Sucess, target is " + tar + " iv_8 is " + iv_8);
 
+	boolean match = false;
+	boolean end = false;
 
-	for(byte candidate = -128; candidate < 128; candidate++){
+	for(byte candidate = -128; !end; candidate++){
+		if(candidate == 127) end = true;
 
 		plsb = lsb;
 		prevCipher = ciphertext;
 		
-		byte[] prefix = {0, 0, 0, 0, 0, 0, 0, candidate};
-		expIV = nextIV(ciphertext);
-		
+		byte[] prefix = merge(pos, msg, candidate);
+		boolean guess = false;
 
-		int length = callEncrypt(prefix, prefix.length, ciphertext);
-
-		if(expIV.equals(subArray(ciphertext, 0, 8))){
-			if (ciphertext[15] == tar){
-				System.out.println("Candidate " + candidate +
-						" is a match");
-				msg[pos] = (byte) (candidate ^ iv_8);
-				break;
-			}
-			else{
-				System.out.println("Candidate " + candidate +
-						" is rejected");
-				continue;
-			}
+		while(!guess){
+			expIV = nextIV(ciphertext);
+			callEncrypt(prefix, prefix.length, ciphertext);
+			guess = Arrays.equals(expIV, subArray(ciphertext, 0, 8));
 		}
-		
-
-		lsb = (ciphertext[6] & 0xFF) * 256 + (ciphertext[7] & 0xFF);
-		int diff = (lsb - plsb + 256 * 256) % (256 * 256);
+		if (ciphertext[15] == tar){
+			System.out.println("Candidate " + candidate + " is a match");
+			msg[pos] = (byte) (candidate ^ iv_8);
+			match = true;
+			break;
+		}
+		else{
+			System.out.println("Candidate " + candidate +" is rejected");
+			continue;
+		}
+//		lsb = (ciphertext[6] & 0xFF) * 256 + (ciphertext[7] & 0xFF);
+//		int diff = (lsb - plsb + 256 * 256) % (256 * 256);
 //		System.out.println("Difference of IV: " + diff + " " +  String.format("%#x", diff));
 	}
+	
+	if(!match){ 
+		System.out.println("\nxXx No match found xXx\n");
+		return;
+	}
+	System.out.println("\nMessage is " + (char) msg[pos]);
 
-	System.out.println("Message is " + (char) msg[0]);
-
-    
+	for(byte b : msg){
+		System.out.print( (char) b);
+	}    
+	System.out.println("");
+    }
     }
     
 

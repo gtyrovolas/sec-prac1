@@ -29,7 +29,7 @@ public class BeastAttack
     static byte[] nextIV(byte[] ct){
     	byte[] expIV = subArray(ct, 0, 8);
     	// next IV guess, based on cycles of 13 ticks
-		expIV[7] += 13;
+		expIV[7] +=  13;
 		if(expIV[7] <= -128 + 13)
 			expIV[6] += 1;
 		return expIV;
@@ -60,6 +60,8 @@ public class BeastAttack
 	while(found){
 		byte[] prefix = new byte[7];
 		Arrays.fill(prefix, (byte) 0);
+		
+		expIV = nextIV(ciphertext);
 		callEncrypt(prefix, 7, ciphertext);
 
 		if(expIV.equals(subArray(ciphertext, 0, 8))) found = true;

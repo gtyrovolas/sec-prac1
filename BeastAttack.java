@@ -8,7 +8,7 @@ public class BeastAttack
 {
 
     public static byte[] subArray(byte[] array, int beg, int end) {
-        return Arrays.copyOfRange(array, beg, end + 1);
+        return Arrays.copyOfRange(array, beg, end);
     }
 
     static void printCT(byte[] ct){
@@ -56,20 +56,24 @@ public class BeastAttack
 
 	byte[] expIV = nextIV(ciphertext);
 	boolean found = false;
+	
+	int cnt = 0;
 
-	while(found){
+	while(!found && cnt < 300){
+		cnt += 1;
+		
 		byte[] prefix = new byte[7];
 		Arrays.fill(prefix, (byte) 0);
-		
 		expIV = nextIV(ciphertext);
 		callEncrypt(prefix, 7, ciphertext);
 
-		if(expIV.equals(subArray(ciphertext, 0, 8))) found = true;
+		found = Arrays.equals(expIV, subArray(ciphertext, 0, 8));
 	}
-
+	if(!found) return;
 	// this is the encryption of m_{8 - pos} xor iv_8
 	byte tar = ciphertext[8 + 7 - pos];
 	byte iv_8 = ciphertext[7];
+	if(found) System.out.println("Sucess, target is " + tar + " iv_8 is " + iv_8);
 
 
 	for(byte candidate = -128; candidate < 128; candidate++){
@@ -85,10 +89,14 @@ public class BeastAttack
 
 		if(expIV.equals(subArray(ciphertext, 0, 8))){
 			if (ciphertext[15] == tar){
+				System.out.println("Candidate " + candidate +
+						" is a match");
 				msg[pos] = (byte) (candidate ^ iv_8);
 				break;
 			}
 			else{
+				System.out.println("Candidate " + candidate +
+						" is rejected");
 				continue;
 			}
 		}
@@ -96,7 +104,7 @@ public class BeastAttack
 
 		lsb = (ciphertext[6] & 0xFF) * 256 + (ciphertext[7] & 0xFF);
 		int diff = (lsb - plsb + 256 * 256) % (256 * 256);
-		System.out.println("Difference of IV: " + diff + " " +  String.format("%#x", diff));
+//		System.out.println("Difference of IV: " + diff + " " +  String.format("%#x", diff));
 	}
 
 	System.out.println("Message is " + (char) msg[0]);

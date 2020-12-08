@@ -96,7 +96,7 @@ public class BeastAttack
 			byte tar = ciphertext[15];
 			byte iv_8 = ciphertext[7];
 			
-			byte[] tarct = subArray(0, 15);
+			byte[] tarct = subArray(ciphertext, 0, 15);
 			printCT(tarct);
 
 			System.out.println("Sucess, target is " + tar + " iv_8 is " + iv_8);

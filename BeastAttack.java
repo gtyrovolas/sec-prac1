@@ -117,7 +117,7 @@ public class BeastAttack
 				
 				guessIV(ciphertext, prefix);	
 				
-				if (ciphertext[15] == tar){
+				if ( Arrays.equals(subArray(ciphertext, 8, 15), subArray(tarct, 8, 15)) ){
 					msg[pos] = (byte) ( candidate ^ iv[7]);
 					System.out.println("Candidate " + candidate + " is a match. Message is " + msg[pos]);
 					printCT(subArray(ciphertext, 0, 15));

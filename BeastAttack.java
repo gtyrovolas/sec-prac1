@@ -52,9 +52,9 @@ public class BeastAttack
 			cnt += 1;
 			
 			byte[] expIV = nextIV(ciphertext);
-			byte[] tempPrefix = new byte[8];
+			byte[] tempPrefix = new byte[ prefix.length ];
 
-			for(int i = 0; i < prefix.length; i++)
+			for(int i = 0; i < tempPrefix.length; i++)
 				tempPrefix[i] = (byte) (expIV[i] ^ prefix[i]);
 
 			callEncrypt(tempPrefix, tempPrefix.length, ciphertext);
@@ -63,7 +63,7 @@ public class BeastAttack
 		}
 
 		if(found) return;
-    		else System.out.println("FAILED TO GUESS IV");
+    	else System.out.println("FAILED TO GUESS IV");
     }
 
     public static void main(String[] args) throws Exception
@@ -76,7 +76,7 @@ public class BeastAttack
 
 		byte[] msg = new byte[8];
 
-		callEncrypt(null, 0, ciphertext);    
+		callEncrypt(null, 0, ciphertext);
 		
 		// the ciphertext is 64 bytes long, hence the padded plaintext is 56 bytes long
 		// the IV is approximately 5 times the timestamp in milliseconds
@@ -96,7 +96,8 @@ public class BeastAttack
 			byte tar = ciphertext[15];
 			byte iv_8 = ciphertext[7];
 			
-			byte[] tarct = subArray(8, 15);
+			byte[] tarct = subArray(0, 15);
+			printCT(tarct);
 
 			System.out.println("Sucess, target is " + tar + " iv_8 is " + iv_8);
 
@@ -117,6 +118,7 @@ public class BeastAttack
 				if (ciphertext[15] == tar){
 					msg[pos] = (byte) ( candidate ^ iv_8);
 					System.out.println("Candidate " + candidate + " is a match. Message is " + msg[pos]);
+					printCT(subArray(ciphertext, 0, 15));
 					match = true;
 					break;
 				}

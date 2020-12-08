@@ -81,9 +81,7 @@ public class BeastAttack
 		callEncrypt(null, 0, ciphertext);
 		
 		// the ciphertext is 64 bytes long, hence the padded plaintext is 56 bytes long
-		// the IV is approximately 5 times the timestamp in milliseconds
-		// when run through ssh the code below gives approximately 5000 difference in the IV
-		
+		// the IV is approximately 5 times the timestamp in milliseconds		
 
 		for(int pos = 0; pos < 8; pos++){
 

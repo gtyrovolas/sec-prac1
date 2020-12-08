@@ -34,11 +34,13 @@ public class BeastAttack
 		return expIV;
     }
 
-    static byte[] merge(int pos, byte[] msg, byte x){
+    static byte[] merge(int pos, byte[] msg, byte[] iv, byte x){
     	byte[] prefix = new byte[8];
 		int i = 0;
 		for(; i < 7 - pos; i++) prefix[i] = 0;
-		for(; i < 7; i++) prefix[i] = msg[pos + i - 7];
+		for(; i < 7; i++){
+			prefix[i] = (byte) (msg[i - 7 + pos] ^ iv[i]);
+		}
 		prefix[7] = x;
 
 		return prefix;
@@ -83,7 +85,7 @@ public class BeastAttack
 		// when run through ssh the code below gives approximately 5000 difference in the IV
 		
 
-		for(int pos = 0; pos < 2; pos++){
+		for(int pos = 0; pos < 8; pos++){
 
 			// for each position find the target ciphertext
 			// need 7 - pos zeroes before the text
@@ -94,12 +96,14 @@ public class BeastAttack
 			
 			// E(msg[pos] xor iv_8) is at ciphertext 15
 			byte tar = ciphertext[15];
-			byte iv_8 = ciphertext[7];
+			byte[] iv = subArray(ciphertext, 0, 8);
+			System.out.println("The IV for the target block is");
+			printCT(iv);
 			
 			byte[] tarct = subArray(ciphertext, 0, 15);
 			printCT(tarct);
 
-			System.out.println("Sucess, target is " + tar + " iv_8 is " + iv_8);
+			System.out.println("Sucess, target is " + tar + " iv_8 is " + iv[7]);
 
 			boolean match = false;
 			boolean end = false;
@@ -108,15 +112,15 @@ public class BeastAttack
 				if(candidate == 127) end = true;
 				
 				prefix = new byte[8];
-				prefix = merge(pos, msg, candidate);
-				System.out.print("Prefix is :" );
+				prefix = merge(pos, msg, iv, candidate);
+				System.out.print("Prefix is:" );
 				for(byte b : prefix) System.out.print(" " + b);
 				System.out.print("  ");
 				
 				guessIV(ciphertext, prefix);	
 				
 				if (ciphertext[15] == tar){
-					msg[pos] = (byte) ( candidate ^ iv_8);
+					msg[pos] = (byte) ( candidate ^ iv[7]);
 					System.out.println("Candidate " + candidate + " is a match. Message is " + msg[pos]);
 					printCT(subArray(ciphertext, 0, 15));
 					match = true;

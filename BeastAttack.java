@@ -95,13 +95,9 @@ public class BeastAttack
 			// E(msg[pos] xor iv_8) is at ciphertext 15
 			byte tar = ciphertext[15];
 			byte[] iv = subArray(ciphertext, 0, 8);
-			System.out.println("The IV for the target block is");
-			printCT(iv);
 			
 			byte[] tarct = subArray(ciphertext, 0, 15);
-			printCT(tarct);
 
-			System.out.println("Sucess, target is " + tar + " iv_8 is " + iv[7]);
 
 			boolean match = false;
 			boolean end = false;
@@ -111,21 +107,15 @@ public class BeastAttack
 				
 				prefix = new byte[8];
 				prefix = merge(pos, msg, iv, candidate);
-				System.out.print("Prefix is:" );
-				for(byte b : prefix) System.out.print(" " + b);
-				System.out.print("  ");
 				
 				guessIV(ciphertext, prefix);	
 				
 				if ( Arrays.equals(subArray(ciphertext, 8, 15), subArray(tarct, 8, 15)) ){
 					msg[pos] = (byte) ( candidate ^ iv[7]);
-					System.out.println("Candidate " + candidate + " is a match. Message is " + msg[pos]);
-					printCT(subArray(ciphertext, 0, 15));
 					match = true;
 					break;
 				}
 				else{
-					System.out.println("Candidate " + candidate +" is rejected. Encrypts to " + ciphertext[15]);
 					continue;
 				}
 			}
@@ -135,15 +125,10 @@ public class BeastAttack
 				System.out.println("\nxXx No match found xXx\n");
 				return;
 			}
-			System.out.println("\nMessage is " + (char) msg[pos]);
+			System.out.print((char) msg[pos]);
 		}
+		System.out.print("\n");
 
-
-		for(byte b : msg){
-			System.out.print( (char) b);
-		}    
-		System.out.println("");
-	    
     }
     
 
